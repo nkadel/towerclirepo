@@ -1,18 +1,27 @@
-#%bcond tests 1
-%global tests 0
-%global tests 1
+%global pypi_name click
 
-Name:           python-click
-Version:        8.1.7
-Release:        4%{?dist}
+%if 0%{?rhel} > 7
+# Disable python2 build by default
+%bcond_with python2
+%else
+%bcond_without python2
+%endif
+
+Name:           python-%{pypi_name}
+Version:        6.7
+Release:        8%{?dist}
 Summary:        Simple wrapper around optparse for powerful command line utilities
 
-License:        BSD-3-Clause
-URL:            https://github.com/pallets/click
-Source0:        %{url}/archive/%{version}/click-%{version}.tar.gz
+License:        BSD
+URL:            https://github.com/mitsuhiko/click
+Source0:        %{url}/archive/%{version}/%{pypi_name}-%{version}.tar.gz
+# https://bugzilla.redhat.com/show_bug.cgi?id=1500962
+# https://github.com/pallets/click/pull/838
+Patch0:         0001-Remove-outdated-comment-about-Click-3.0.patch
+Patch1:         0002-Add-pytest-option-to-not-capture-warnings.patch
+Patch2:         0003-Catch-and-test-pytest-warning.patch
 
 BuildArch:      noarch
-BuildRequires:  python%{python3_pkgversion}-devel
 
 %global _description \
 click is a Python package for creating beautiful command line\
@@ -22,156 +31,78 @@ comes with good defaults out of the box.
 
 %description %{_description}
 
-
-%package -n     python%{python3_pkgversion}-click
+%if %{with python2}
+%package -n     python2-%{pypi_name}
 Summary:        %{summary}
-
-%description -n python%{python3_pkgversion}-click %{_description}
-
-
-%prep
-%autosetup -n click-%{version} -p1
-
-
-%generate_buildrequires
-%pyproject_buildrequires %{?with_tests:requirements/tests.in}
-
-
-%build
-%pyproject_wheel
-
-
-%install
-%pyproject_install
-%pyproject_save_files click
-
-
-%check
-%pyproject_check_import
-%if %{with tests}
-%pytest
+%{?python_provide:%python_provide python2-%{pypi_name}}
+BuildRequires:  python2-devel
+%if ! (0%{?rhel} && 0%{?rhel} <= 7)
+BuildRequires:  python2-setuptools
+# pytest in base RHEL is too old, we'll skip the tests there
+BuildRequires:  python2-pytest >= 2.8
+%else
+BuildRequires:  python-setuptools
 %endif
 
+%description -n python2-%{pypi_name} %{_description}
 
-%files -n python%{python3_pkgversion}-click -f %pyproject_files
-%license LICENSE.rst
-%doc README.rst CHANGES.rst
+Python 2 version.
+%endif # with python2
 
+%package -n     python%{python3_pkgversion}-%{pypi_name}
+Summary:        %{summary}
+%{?python_provide:%python_provide python%{python3_pkgversion}-%{pypi_name}}
+BuildRequires:  python%{python3_pkgversion}-devel
+BuildRequires:  python%{python3_pkgversion}-setuptools
+BuildRequires:  python%{python3_pkgversion}-pytest >= 2.8
+
+%description -n python%{python3_pkgversion}-%{pypi_name} %{_description}
+
+Python 3 version.
+
+%prep
+%autosetup -n %{pypi_name}-%{version} -p1
+
+%build
+%if %{with python2}
+%py2_build
+%endif # with python2
+%py3_build
+
+%install
+%if %{with python2}
+%py2_install
+%endif # with python2
+%py3_install
+
+%check
+export PYTHONPATH=$(pwd)
+export LC_ALL=en_US.UTF-8
+%if %{with python2}
+%if ! (0%{?rhel} && 0%{?rhel} <= 7)
+# pytest in base RHEL is too old, we'll skip the tests there
+py.test-%{python2_version} tests --tb=long --verbose
+%endif
+%endif # with python2
+py.test-%{python3_version} tests --tb=long --verbose
+
+%if %{with python2}
+%files -n python2-%{pypi_name}
+%license LICENSE
+%doc README CHANGES
+%{python2_sitelib}/%{pypi_name}-*.egg-info/
+%{python2_sitelib}/%{pypi_name}/
+%endif # with python2
+
+%files -n python%{python3_pkgversion}-%{pypi_name}
+%license LICENSE
+%doc README CHANGES
+%{python3_sitelib}/%{pypi_name}-*.egg-info/
+%{python3_sitelib}/%{pypi_name}/
 
 %changelog
-* Wed Jan 31 2024 Maxwell G <maxwell@gtmx.me> - 8.1.7-4
-- Add test bcond to make click easier to bootstrap
-- Use pytest directly instead of pulling in tox
-
-* Fri Jan 26 2024 Fedora Release Engineering <releng@fedoraproject.org> - 8.1.7-3
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_40_Mass_Rebuild
-
-* Mon Jan 22 2024 Fedora Release Engineering <releng@fedoraproject.org> - 8.1.7-2
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_40_Mass_Rebuild
-
-* Wed Aug 23 2023 Charalampos Stratakis <cstratak@redhat.com> - 8.1.7-1
-- Update to 8.1.7
-Resolves: rhbz#2220975
-
-* Fri Jul 21 2023 Fedora Release Engineering <releng@fedoraproject.org> - 8.1.3-5
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_39_Mass_Rebuild
-
-* Wed Jun 14 2023 Python Maint <python-maint@redhat.com> - 8.1.3-4
-- Rebuilt for Python 3.12
-
-* Wed Apr 12 2023 Miro Hrončok <mhroncok@redhat.com> - 8.1.3-3
-- Fix test failures with pytest 7.3.0
-
-* Fri Jan 20 2023 Fedora Release Engineering <releng@fedoraproject.org> - 8.1.3-2
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_38_Mass_Rebuild
-
-* Sat Aug 06 2022 Charalampos Stratakis <cstratak@redhat.com> - 8.1.3-1
-- Update to 8.1.3
-Resolves: rhbz#2080026
-
-* Fri Jul 22 2022 Fedora Release Engineering <releng@fedoraproject.org> - 8.1.2-3
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_37_Mass_Rebuild
-
-* Mon Jun 13 2022 Python Maint <python-maint@redhat.com> - 8.1.2-2
-- Rebuilt for Python 3.11
-
-* Tue Apr 05 2022 Charalampos Stratakis <cstratak@redhat.com> - 8.1.2-1
-- Update to 8.1.2
-Resolves: rhbz#2069360
-
-* Wed Mar 02 2022 Charalampos Stratakis <cstratak@redhat.com> - 8.0.4-2
-- Unpin pytest version
-
-* Thu Feb 24 2022 Charalampos Stratakis <cstratak@redhat.com> - 8.0.4-1
-- Update to 8.0.4
-Resolves: rhbz#2056119
-
-* Fri Jan 21 2022 Fedora Release Engineering <releng@fedoraproject.org> - 8.0.3-2
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_36_Mass_Rebuild
-
-* Fri Nov 05 2021 Karolina Surma <ksurma@redhat.com> - 8.0.3-1
-- Update to 8.0.3
-Resolves: rhbz#2012353
-
-* Fri Jul 23 2021 Fedora Release Engineering <releng@fedoraproject.org> - 8.0.1-3
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_35_Mass_Rebuild
-
-* Thu Jul 08 2021 Lumír Balhar <lbalhar@redhat.com> - 8.0.1-2
-- Use test dependencies without version locks
-
-* Tue Jun 22 2021 Lumír Balhar <lbalhar@redhat.com> - 8.0.1-1
-- Update to 8.0.1
-Resolves: rhbz#1901659
-
-* Wed Jun 02 2021 Python Maint <python-maint@redhat.com> - 7.1.2-6
-- Rebuilt for Python 3.10
-
-* Wed Jan 27 2021 Fedora Release Engineering <releng@fedoraproject.org> - 7.1.2-5
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_34_Mass_Rebuild
-
-* Fri Sep 11 2020 Charalampos Stratakis <cstratak@redhat.com> - 7.1.2-4
-- Modernize the SPEC and convert it to pyproject macros
-
-* Wed Jul 29 2020 Fedora Release Engineering <releng@fedoraproject.org> - 7.1.2-3
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_33_Mass_Rebuild
-
-* Fri May 22 2020 Miro Hrončok <mhroncok@redhat.com> - 7.1.2-2
-- Rebuilt for Python 3.9
-
-* Tue Apr 28 2020 Fabian Affolter <mail@fabian-affolter.ch> - 7.1.2-1
-- Update to latest upstream release 7.1.2 (rhbz#1828589)
-
-* Sat Apr 18 2020 Fabian Affolter <mail@fabian-affolter.ch> - 7.1.1-1
-- Update to latest upstream release 7.1.1 (rhbz#1811727)
-
-* Thu Jan 30 2020 Fedora Release Engineering <releng@fedoraproject.org> - 7.0-7
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_32_Mass_Rebuild
-
-* Wed Sep 18 2019 Miro Hrončok <mhroncok@redhat.com> - 7.0-6
-- Subpackage python2-click has been removed
-  See https://fedoraproject.org/wiki/Changes/Mass_Python_2_Package_Removal
-
-* Thu Aug 15 2019 Miro Hrončok <mhroncok@redhat.com> - 7.0-5
-- Rebuilt for Python 3.8
-
-* Fri Jul 26 2019 Fedora Release Engineering <releng@fedoraproject.org> - 7.0-4
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_31_Mass_Rebuild
-
-* Sat Feb 02 2019 Fedora Release Engineering <releng@fedoraproject.org> - 7.0-3
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_30_Mass_Rebuild
-
-* Sun Nov 18 2018 Zbigniew Jędrzejewski-Szmek <zbyszek@in.waw.pl> - 7.0-2
-- Drop explicit locale setting
-  See https://fedoraproject.org/wiki/Changes/Remove_glibc-langpacks-all_from_buildroot
-
-* Tue Oct 02 2018 Charalampos Stratakis <cstratak@redhat.com> - 7.0-1
-- Update to 7.0
-
-* Fri Jul 13 2018 Fedora Release Engineering <releng@fedoraproject.org> - 6.7-9
-- Rebuilt for https://fedoraproject.org/wiki/Fedora_29_Mass_Rebuild
-
-* Fri Jun 15 2018 Miro Hrončok <mhroncok@redhat.com> - 6.7-8
-- Rebuilt for Python 3.7
+* Fri Jun 22 2018 Charalampos Stratakis <cstratak@redhat.com> - 6.7-8
+- Conditionalize the python2 subpackage
 
 * Fri Feb 09 2018 Fedora Release Engineering <releng@fedoraproject.org> - 6.7-7
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_28_Mass_Rebuild
