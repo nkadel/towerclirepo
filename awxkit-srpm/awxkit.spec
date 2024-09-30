@@ -1,12 +1,12 @@
 #
-# spec file for package ansible-tower-cli
+# spec file for package awxkit
 #
 
 # pypi naming of module and components is deranged
-%global pypi_name ansible-tower-cli
-%global pypi_modname ansible_tower_cli
-%global pypi_shortname tower_cli
-%global pypi_version 3.3.9
+%global pypi_name awxkit
+%global pypi_modname awxkit
+%global pypi_shortname awxkit
+%global pypi_version 24.6.1
 
 Name:           %{pypi_name}
 Version:        %{pypi_version}
@@ -24,14 +24,17 @@ BuildRequires:  python%{python3_pkgversion}-devel
 BuildRequires:  python%{python3_pkgversion}-setuptools
 BuildRequires:  python%{python3_pkgversion}-pip
 BuildRequires:  python%{python3_pkgversion}-wheel
-# SECTION
+
 BuildRequires:  python%{python3_pkgversion}-pytest
 BuildRequires:  python%{python3_pkgversion}-PyYAML
 BuildRequires:  python%{python3_pkgversion}-requests
-BuildRequires:  python%{python3_pkgversion}-websocket-client
+BuildRequires:  python%{python3_pkgversion}-cryptography
+BuildRequires:  python%{python3_pkgversion}-jq
+BuildRequires:  python%{python3_pkgversion}-websocket-client >= 0.57.0
 # SECTION
 BuildRequires:  fdupes
 BuildRequires:  python%{python3_pkgversion}-rpm-macros
+
 Requires:       python%{python3_pkgversion}-PyYAML
 Requires:       python%{python3_pkgversion}-requests
 
@@ -67,14 +70,12 @@ echo %{version} > VERSION
 #%%python_uninstall_alternative tower-cli
 
 %files
-#%%doc README.rst
-#%%doc docs
-%license LICENSE
+%doc README.md
+#T%license LICENSE
 %{python3_sitelib}/%{pypi_shortname}/
 %{python3_sitelib}/%{pypi_modname}-%{version}.dist-info
-%{_bindir}/tower-cli
-%{_bindir}/awx-cli
+%{_bindir}/*
 
 %changelog
-* Sun Sep 29 2034 Nico Kadel-Garcia <nkadel@gmail.com
+* Sun Sep 29 2024 Nico Kadel-Garcia <nkadel@gmail.com
 - Repackage SuSE RPM for RHEL use

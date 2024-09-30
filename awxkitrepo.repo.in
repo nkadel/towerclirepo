@@ -1,0 +1,15 @@
+[awxkitrepo]
+name=awxkit repo - $basearch
+baseurl=file://@REPOBASEDIR@/awxkitrepo/@RELEASEDIR@/$releasever/$basearch
+enabled=0
+# Expire very quickly for locally updated repo
+metadata_expire=1
+gpgcheck=0
+
+[awxkitrepo-source]
+name=awxkit repo - Source
+baseurl=file://@REPOBASEDIR@/awxkitrepo/@RELEASEDIR@/$releasever/SRPMS/
+enabled=0
+# Expire very quickly for locally updated repo
+metadata_expire=1
+gpgcheck=0
