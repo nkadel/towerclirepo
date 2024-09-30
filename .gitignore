@@ -1,0 +1,12 @@
+*.cfg
+*.conf
+*.out
+*.repo
+*.rpm
+*.tar.*
+*[0-9]
+*\#*
+*~
+awsclirepo
+repodata
+rpmbuild
