@@ -1,4 +1,6 @@
-%bcond tests 1
+#%bcond tests 1
+%global tests 0
+%global tests 1
 
 Name:           python-click
 Version:        8.1.7
@@ -57,7 +59,7 @@ Summary:        %{summary}
 
 
 %changelog
-* Wed Jan 31 2023 Maxwell G <maxwell@gtmx.me> - 8.1.7-4
+* Wed Jan 31 2024 Maxwell G <maxwell@gtmx.me> - 8.1.7-4
 - Add test bcond to make click easier to bootstrap
 - Use pytest directly instead of pulling in tox
 
